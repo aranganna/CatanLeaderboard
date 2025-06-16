@@ -233,6 +233,100 @@
         .flex.space-x-4 {
             gap: 24px !important;
         }
+
+        /* Stats button and modal styles */
+        #show-stats {
+            position: fixed;
+            left: 1rem;
+            bottom: 1rem;
+            background-color: #f59e0b;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: background-color 0.3s ease;
+            z-index: 50;
+        }
+
+        #show-stats:hover {
+            background-color: #d97706;
+        }
+
+        #stats-modal {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        #stats-modal .bg-white {
+            background-color: #161622;
+            color: white;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            max-width: 90%;
+            width: 600px;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+        }
+
+        #stats-modal h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            position: relative;
+            display: inline-block;
+        }
+
+        #stats-modal h2::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            bottom: -4px;
+            left: 0;
+            background: linear-gradient(to right, transparent, #f59e0b, transparent);
+        }
+
+        #stats-modal table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        #stats-modal th, #stats-modal td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+
+        #stats-modal th {
+            background-color: #1e1e2e;
+            color: #f59e0b;
+        }
+
+        #stats-modal tr:hover {
+            background-color: #2a2a3d;
+        }
+
+        #close-stats {
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 1.5rem;
+            cursor: pointer;
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+        }
+
+        #close-stats:hover {
+            color: #f59e0b;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
@@ -256,6 +350,30 @@
         <p id="user-id" class="font-mono bg-gray-200 p-1 rounded"></p>
     </div>
 
+    <!-- Stats Button and Table (hidden by default) -->
+    <button id="show-stats" class="fixed left-4 bottom-4 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-lg shadow-lg z-50">Stats</button>
+    <div id="stats-modal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-2xl p-6 max-w-2xl w-full relative">
+            <button id="close-stats" class="absolute top-2 right-2 text-2xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
+            <h2 class="text-2xl font-bold mb-4">Game History</h2>
+            <div id="streak-info" class="mb-4 text-lg font-semibold text-yellow-700"></div>
+            <div id="prev-winner-info" class="mb-4 text-md text-green-700"></div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full border text-sm" id="stats-table">
+                    <thead>
+                        <tr class="bg-gray-200">
+                            <th class="border px-2 py-1">Time</th>
+                            <th class="border px-2 py-1">Player</th>
+                            <th class="border px-2 py-1">Change</th>
+                            <th class="border px-2 py-1">Result</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stats-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         // In-memory storage for player data
         let playersData = [];
@@ -268,6 +386,12 @@
         const userIdElement = document.getElementById('user-id');
         const resourceBg = document.getElementById('resource-bg');
         const soundToggle = document.getElementById('sound-toggle');
+        const showStatsButton = document.getElementById('show-stats');
+        const statsModal = document.getElementById('stats-modal');
+        const closeStatsButton = document.getElementById('close-stats');
+        const statsTableBody = document.getElementById('stats-table-body');
+        const streakInfo = document.getElementById('streak-info');
+        const prevWinnerInfo = document.getElementById('prev-winner-info');
         
         // Sound management
         let soundEnabled = true;
@@ -428,19 +552,101 @@
             });
         }
         
+        // --- Stats tracking ---
+        let statsHistory = [];
+        let winStreaks = {};
+        let currentStreakPlayer = null;
+        let currentStreakCount = 0;
+        let previousWinner = null;
+
+        // Helper to format date/time
+        function formatDateTime(date) {
+            return date.toLocaleString();
+        }
+
+        // Update stats table
+        function renderStatsTable() {
+            const tbody = document.getElementById('stats-table-body');
+            tbody.innerHTML = '';
+            statsHistory.slice().reverse().forEach(entry => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="border px-2 py-1">${formatDateTime(new Date(entry.time))}</td>
+                    <td class="border px-2 py-1">${entry.player}</td>
+                    <td class="border px-2 py-1">${entry.change > 0 ? '+' : ''}${entry.change}</td>
+                    <td class="border px-2 py-1">${entry.result}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Update streak and previous winner info
+        function renderStreakInfo() {
+            const streakDiv = document.getElementById('streak-info');
+            const prevWinnerDiv = document.getElementById('prev-winner-info');
+            if (currentStreakPlayer && currentStreakCount > 1) {
+                streakDiv.textContent = `${currentStreakPlayer} is on a win streak of ${currentStreakCount}!`;
+            } else {
+                streakDiv.textContent = '';
+            }
+            if (previousWinner) {
+                prevWinnerDiv.textContent = `Previous winner: ${previousWinner}`;
+            } else {
+                prevWinnerDiv.textContent = '';
+            }
+        }
+
+        // Show/hide stats modal
+        document.getElementById('show-stats').addEventListener('click', () => {
+            document.getElementById('stats-modal').classList.remove('hidden');
+            renderStatsTable();
+            renderStreakInfo();
+        });
+        document.getElementById('close-stats').addEventListener('click', () => {
+            document.getElementById('stats-modal').classList.add('hidden');
+        });
+
         // Function to handle win updates
         function updateWins(playerId, amount) {
             try {
                 const playerIndex = playersData.findIndex(p => p.id === playerId);
-                
                 if (playerIndex !== -1) {
                     // Prevent wins from going below zero
                     if (amount < 0 && playersData[playerIndex].wins <= 0) {
                         return;
                     }
-                    
                     playersData[playerIndex].wins += amount;
-                    
+
+                    // --- Stats tracking logic ---
+                    const now = new Date();
+                    const playerName = playersData[playerIndex].id;
+                    let result = '';
+                    if (amount > 0) {
+                        // Win streak logic
+                        if (currentStreakPlayer === playerName) {
+                            currentStreakCount++;
+                        } else {
+                            currentStreakPlayer = playerName;
+                            currentStreakCount = 1;
+                        }
+                        previousWinner = playerName;
+                        result = currentStreakCount > 1 ? `Win Streak (${currentStreakCount})` : 'Win';
+                    } else {
+                        // Loss or decrement breaks streak
+                        if (currentStreakPlayer === playerName) {
+                            currentStreakPlayer = null;
+                            currentStreakCount = 0;
+                        }
+                        result = 'Loss';
+                    }
+                    statsHistory.push({
+                        time: now,
+                        player: playerName,
+                        change: amount,
+                        result
+                    });
+                    // --- End stats tracking logic ---
+
                     // Play appropriate sound and animation
                     if (amount > 0) {
                         playWinSound();
@@ -453,7 +659,7 @@
                     } else {
                         playClickSound();
                     }
-                    
+
                     // Re-render the leaderboard
                     renderPlayers(playersData);
                 }
@@ -472,6 +678,71 @@
                 }
             }
         });
+
+        // Stats modal functionality
+        function toggleStatsModal() {
+            statsModal.classList.toggle('hidden');
+            statsModal.classList.toggle('flex');
+        }
+
+        showStatsButton.addEventListener('click', () => {
+            // Update stats table and info
+            updateStatsTable();
+            updateStreakInfo();
+            updatePrevWinnerInfo();
+            
+            toggleStatsModal();
+        });
+
+        closeStatsButton.addEventListener('click', () => {
+            toggleStatsModal();
+        });
+
+        // Update stats table with win/loss history
+        function updateStatsTable() {
+            // Clear existing rows
+            statsTableBody.innerHTML = '';
+
+            // Example data - in a real app, this would come from your data source
+            const exampleStats = [
+                { time: '2023-10-01 14:30', player: 'ODDISH', change: '+3', result: 'Win' },
+                { time: '2023-09-28 10:15', player: 'MRNA', change: '-1', result: 'Loss' },
+                { time: '2023-09-27 16:45', player: 'GARGAN', change: '+2', result: 'Win' },
+                { time: '2023-09-26 09:00', player: 'LNCLN', change: '+1', result: 'Win' },
+                { time: '2023-09-25 18:30', player: 'ODDISH', change: '-2', result: 'Loss' },
+                { time: '2023-09-24 12:00', player: 'MRNA', change: '+3', result: 'Win' },
+                { time: '2023-09-23 15:30', player: 'GARGAN', change: '-1', result: 'Loss' },
+                { time: '2023-09-22 11:00', player: 'LNCLN', change: '+2', result: 'Win' }
+            ];
+
+            exampleStats.forEach(stat => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-100 transition-colors';
+
+                Object.values(stat).forEach(text => {
+                    const cell = document.createElement('td');
+                    cell.className = 'border px-2 py-1';
+                    cell.textContent = text;
+                    row.appendChild(cell);
+                });
+
+                statsTableBody.appendChild(row);
+            });
+        }
+
+        // Update win streak info
+        function updateStreakInfo() {
+            // Example calculation - replace with real logic
+            const longestStreak = 5; // In a real app, calculate this based on data
+            streakInfo.textContent = `Longest Win Streak: ${longestStreak} games`;
+        }
+
+        // Update previous winner info
+        function updatePrevWinnerInfo() {
+            // Example data - replace with real logic
+            const prevWinner = playersData.reduce((prev, current) => (prev.wins > current.wins) ? prev : current);
+            prevWinnerInfo.textContent = `Previous Winner: ${prevWinner.name} (${prevWinner.wins} wins)`;
+        }
 
         // Initialize the application
         function initializeApp() {
