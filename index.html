@@ -374,23 +374,23 @@
 
     <!-- Stats Button and Table (hidden by default) -->
     <button id="show-stats" class="fixed left-4 bottom-4 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-lg shadow-lg z-50">Stats</button>
-    <div id="stats-modal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden" style="display: none;">
-        <div class="bg-white rounded-lg shadow-2xl p-6 max-w-2xl w-full relative">
-            <button id="close-stats" class="absolute top-2 right-2 text-2xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
-            <h2 class="text-2xl font-bold mb-4">Game History</h2>
-            <div id="streak-info" class="mb-4 text-lg font-semibold text-yellow-700"></div>
-            <div id="prev-winner-info" class="mb-4 text-md text-green-700"></div>
+    <div id="stats-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50" style="display: none;">
+        <div class="bg-white rounded-lg shadow-2xl p-8 mx-4 w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
+            <button id="close-stats" class="absolute top-4 right-4 text-3xl font-bold text-gray-500 hover:text-gray-800 w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100">&times;</button>
+            <h2 class="text-3xl font-bold mb-6 text-center">Game History</h2>
+            <div id="streak-info" class="mb-4 text-lg font-semibold text-yellow-700 text-center"></div>
+            <div id="prev-winner-info" class="mb-6 text-lg text-green-700 text-center"></div>
             <div class="overflow-x-auto">
-                <table class="min-w-full border text-sm" id="stats-table">
+                <table class="min-w-full border text-sm shadow-sm" id="stats-table">
                     <thead>
-                        <tr class="bg-gray-200">
-                            <th class="border px-2 py-1">Time</th>
-                            <th class="border px-2 py-1">Player</th>
-                            <th class="border px-2 py-1">Change</th>
-                            <th class="border px-2 py-1">Result</th>
+                        <tr class="bg-gray-100">
+                            <th class="border px-4 py-2 text-left">Time</th>
+                            <th class="border px-4 py-2 text-left">Player</th>
+                            <th class="border px-4 py-2 text-left">Change</th>
+                            <th class="border px-4 py-2 text-left">Result</th>
                         </tr>
                     </thead>
-                    <tbody id="stats-table-body"></tbody>
+                    <tbody id="stats-table-body" class="bg-white"></tbody>
                 </table>
             </div>
         </div>
@@ -586,15 +586,18 @@
         function updateStatsTable() {
             // Clear existing rows
             statsTableBody.innerHTML = '';
+            
             statsHistory.forEach(stat => {
                 const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-100 transition-colors';
+                row.className = 'hover:bg-gray-50 transition-colors';
+                
                 Object.values(stat).forEach(text => {
                     const cell = document.createElement('td');
-                    cell.className = 'border px-2 py-1';
+                    cell.className = 'border px-4 py-2';
                     cell.textContent = text;
                     row.appendChild(cell);
                 });
+                
                 statsTableBody.appendChild(row);
             });
         }
@@ -623,6 +626,44 @@
         });
         document.getElementById('close-stats').addEventListener('click', () => {
             document.getElementById('stats-modal').classList.add('hidden');
+        });
+
+        // Stats modal functionality
+        function toggleStatsModal(show = null) {
+            const modalElement = document.getElementById('stats-modal');
+            const shouldShow = show !== null ? show : modalElement.style.display === 'none';
+            
+            if (shouldShow) {
+                modalElement.style.display = 'flex';
+                modalElement.classList.remove('hidden');
+                modalElement.classList.add('flex');
+                updateStatsTable(); // Update table when showing
+            } else {
+                modalElement.style.display = 'none';
+                modalElement.classList.add('hidden');
+                modalElement.classList.remove('flex');
+            }
+        }
+
+        // Event listeners for stats modal
+        document.getElementById('show-stats').addEventListener('click', () => {
+            toggleStatsModal(true);
+        });
+
+        document.getElementById('close-stats').addEventListener('click', () => {
+            toggleStatsModal(false);
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('stats-modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('stats-modal')) {
+                toggleStatsModal(false);
+            }
+        });
+
+        // Make sure modal is hidden on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            toggleStatsModal(false);
         });
 
         // Function to handle win updates
