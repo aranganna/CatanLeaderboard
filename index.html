@@ -11,7 +11,8 @@
     <style>
         body {
             font-family: 'Jost', sans-serif;
-            background: linear-gradient(135deg, #0077be 0%, #005a9e 100%);
+            /* Replace gradient with Catan board image background */
+            background: url('https://upload.wikimedia.org/wikipedia/commons/6/6f/Catan-hex-board.png') center center/cover no-repeat, linear-gradient(135deg, #0077be 0%, #005a9e 100%);
             position: relative;
             overflow-x: hidden;
         }
@@ -194,6 +195,44 @@
             background: rgba(255,255,255,1);
         }
 
+        /* Add a semi-transparent background to the leaderboard for readability */
+        #leaderboard {
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 16px;
+            padding: 32px 16px;
+            margin: 40px auto;
+            max-width: 900px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+        }
+
+        /* Larger plus/minus buttons and prevent cut-off */
+        .catan-button.catan-button-plus,
+        .catan-button.catan-button-minus {
+            font-size: 2.5rem !important;
+            width: 64px !important;
+            height: 64px !important;
+            min-width: 64px !important;
+            min-height: 64px !important;
+            border-radius: 50% !important;
+            border: none;
+            margin: 8px;
+            background: #f7d560;
+            color: #333;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .catan-button.catan-button-plus:hover,
+        .catan-button.catan-button-minus:hover {
+            background: #e6b800;
+        }
+        /* Ensure button container has enough space */
+        .flex.space-x-4 {
+            gap: 24px !important;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
