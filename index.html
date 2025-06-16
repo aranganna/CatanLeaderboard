@@ -374,7 +374,7 @@
 
     <!-- Stats Button and Table (hidden by default) -->
     <button id="show-stats" class="fixed left-4 bottom-4 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-lg shadow-lg z-50">Stats</button>
-    <div id="stats-modal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden">
+    <div id="stats-modal" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 hidden" style="display: none;">
         <div class="bg-white rounded-lg shadow-2xl p-6 max-w-2xl w-full relative">
             <button id="close-stats" class="absolute top-2 right-2 text-2xl font-bold text-gray-500 hover:text-gray-800">&times;</button>
             <h2 class="text-2xl font-bold mb-4">Game History</h2>
@@ -702,9 +702,23 @@
         });
 
         // Stats modal functionality
-        function toggleStatsModal() {
-            statsModal.classList.toggle('hidden');
-            statsModal.classList.toggle('flex');
+        function toggleStatsModal(forceClose = false) {
+            if (forceClose) {
+                statsModal.classList.add('hidden');
+                statsModal.classList.remove('flex');
+                statsModal.style.display = 'none';
+            } else {
+                const isHidden = statsModal.classList.contains('hidden');
+                if (isHidden) {
+                    statsModal.classList.remove('hidden');
+                    statsModal.classList.add('flex');
+                    statsModal.style.display = 'flex';
+                } else {
+                    statsModal.classList.add('hidden');
+                    statsModal.classList.remove('flex');
+                    statsModal.style.display = 'none';
+                }
+            }
         }
 
         showStatsButton.addEventListener('click', () => {
@@ -712,12 +726,11 @@
             updateStatsTable();
             updateStreakInfo();
             updatePrevWinnerInfo();
-            
             toggleStatsModal();
         });
 
         closeStatsButton.addEventListener('click', () => {
-            toggleStatsModal();
+            toggleStatsModal(true);
         });
 
         // Update stats table with win/loss history
