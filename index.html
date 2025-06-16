@@ -516,6 +516,14 @@
             { id: "LNCLN", name: "Luke Kramer", wins: 15, color: '#ef4444', piece: 3 }
         ];
 
+        // --- Prepopulate statsHistory with initial wins ---
+        let statsHistory = [
+            { time: '2025-01-01 12:00', player: 'ODDISH', change: '+24', result: 'Win' },
+            { time: '2025-01-01 12:00', player: 'MRNA', change: '+13', result: 'Win' },
+            { time: '2025-01-01 12:00', player: 'GARGAN', change: '+16', result: 'Win' },
+            { time: '2025-01-01 12:00', player: 'LNCLN', change: '+15', result: 'Win' }
+        ];
+        
         // Function to initialize players data
         function initializePlayers() {
             if (playersData.length === 0) {
@@ -574,31 +582,20 @@
             });
         }
         
-        // --- Stats tracking ---
-        let statsHistory = [];
-        let winStreaks = {};
-        let currentStreakPlayer = null;
-        let currentStreakCount = 0;
-        let previousWinner = null;
-
-        // Helper to format date/time
-        function formatDateTime(date) {
-            return date.toLocaleString();
-        }
-
-        // Update stats table
-        function renderStatsTable() {
-            const tbody = document.getElementById('stats-table-body');
-            tbody.innerHTML = '';
-            statsHistory.slice().reverse().forEach(entry => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="border px-2 py-1">${formatDateTime(new Date(entry.time))}</td>
-                    <td class="border px-2 py-1">${entry.player}</td>
-                    <td class="border px-2 py-1">${entry.change > 0 ? '+' : ''}${entry.change}</td>
-                    <td class="border px-2 py-1">${entry.result}</td>
-                `;
-                tbody.appendChild(tr);
+        // Update stats table with win/loss history
+        function updateStatsTable() {
+            // Clear existing rows
+            statsTableBody.innerHTML = '';
+            statsHistory.forEach(stat => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-100 transition-colors';
+                Object.values(stat).forEach(text => {
+                    const cell = document.createElement('td');
+                    cell.className = 'border px-2 py-1';
+                    cell.textContent = text;
+                    row.appendChild(cell);
+                });
+                statsTableBody.appendChild(row);
             });
         }
 
@@ -733,51 +730,12 @@
             toggleStatsModal(true);
         });
 
-        // Update stats table with win/loss history
-        function updateStatsTable() {
-            // Clear existing rows
-            statsTableBody.innerHTML = '';
-
-            // Example data - in a real app, this would come from your data source
-            const exampleStats = [
-                { time: '2023-10-01 14:30', player: 'ODDISH', change: '+3', result: 'Win' },
-                { time: '2023-09-28 10:15', player: 'MRNA', change: '-1', result: 'Loss' },
-                { time: '2023-09-27 16:45', player: 'GARGAN', change: '+2', result: 'Win' },
-                { time: '2023-09-26 09:00', player: 'LNCLN', change: '+1', result: 'Win' },
-                { time: '2023-09-25 18:30', player: 'ODDISH', change: '-2', result: 'Loss' },
-                { time: '2023-09-24 12:00', player: 'MRNA', change: '+3', result: 'Win' },
-                { time: '2023-09-23 15:30', player: 'GARGAN', change: '-1', result: 'Loss' },
-                { time: '2023-09-22 11:00', player: 'LNCLN', change: '+2', result: 'Win' }
-            ];
-
-            exampleStats.forEach(stat => {
-                const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-100 transition-colors';
-
-                Object.values(stat).forEach(text => {
-                    const cell = document.createElement('td');
-                    cell.className = 'border px-2 py-1';
-                    cell.textContent = text;
-                    row.appendChild(cell);
-                });
-
-                statsTableBody.appendChild(row);
-            });
-        }
-
-        // Update win streak info
-        function updateStreakInfo() {
-            // Example calculation - replace with real logic
-            const longestStreak = 5; // In a real app, calculate this based on data
-            streakInfo.textContent = `Longest Win Streak: ${longestStreak} games`;
-        }
-
-        // Update previous winner info
-        function updatePrevWinnerInfo() {
-            // Example data - replace with real logic
-            const prevWinner = playersData.reduce((prev, current) => (prev.wins > current.wins) ? prev : current);
-            prevWinnerInfo.textContent = `Previous Winner: ${prevWinner.name} (${prevWinner.wins} wins)`;
-        }
+        // Ensure modal is hidden on launch
+        window.addEventListener('DOMContentLoaded', () => {
+            statsModal.classList.add('hidden');
+            statsModal.classList.remove('flex');
+            statsModal.style.display = 'none';
+        });
 
         // Initialize the application
         function initializeApp() {
